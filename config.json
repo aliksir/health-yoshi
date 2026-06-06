@@ -1,0 +1,35 @@
+{
+  "services": [
+    {
+      "name": "denwa-neko-app",
+      "url": "http://localhost:7306",
+      "timeout": 5000
+    },
+    {
+      "name": "jp-dashboard",
+      "url": "http://localhost:7300",
+      "timeout": 5000
+    },
+    {
+      "name": "x-auto-bot",
+      "url": "http://localhost:7301",
+      "timeout": 5000
+    },
+    {
+      "name": "cc-dashboard",
+      "url": "http://localhost:7302",
+      "timeout": 5000
+    },
+    {
+      "name": "outage-dashboard",
+      "url": "http://localhost:7303",
+      "timeout": 5000
+    }
+  ],
+  "retryCount": 2,
+  "retryDelayMs": 1000,
+  "telegram": {
+    "botToken": "SECRET_REF:HEALTH_YOSHI_BOT_TOKEN",
+    "chatId": "SECRET_REF:HEALTH_YOSHI_CHAT_ID"
+  }
+}
