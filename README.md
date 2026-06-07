@@ -1,4 +1,5 @@
 > 日本語版は [README.ja.md](README.ja.md) を参照してください。
+> Part of the [neko-HQ](https://github.com/aliksir/neko-hq) ecosystem.
 
 # health-yoshi
 
