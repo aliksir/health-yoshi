@@ -1,0 +1,13 @@
+{
+  "name": "health-yoshi",
+  "version": "0.1.0",
+  "description": "Service health checker with Telegram notification support. Monitors local development services and alerts on failures. Zero dependencies.",
+  "author": {
+    "name": "aliksir",
+    "url": "https://github.com/aliksir"
+  },
+  "homepage": "https://github.com/aliksir/health-yoshi#readme",
+  "repository": "https://github.com/aliksir/health-yoshi",
+  "license": "MIT",
+  "keywords": ["claude", "claude-code", "health-check", "monitoring", "telegram", "devops"]
+}
