@@ -1,7 +1,7 @@
 /**
- * notifier.mjs — Telegram notification (zero dependencies)
+ * notifier.mjs — Telegram + Webhook notification (zero dependencies)
  *
- * Uses Node.js 18+ global fetch API to call Telegram Bot API.
+ * Uses Node.js 18+ global fetch API.
  */
 
 /**
@@ -39,6 +39,29 @@ export async function sendTelegram(botToken, chatId, message) {
     return true;
   } catch (err) {
     console.error(`[health-yoshi] Telegram send failed: ${err.message}`);
+    return false;
+  }
+}
+
+/**
+ * Send a message via generic webhook (POST JSON).
+ * @param {string} url - Webhook URL
+ * @param {string} message - Message text
+ * @param {object} payload - Full check result payload
+ * @returns {Promise<boolean>}
+ */
+export async function sendWebhook(url, message, payload) {
+  if (!url) return false;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: message, ...payload }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error(`[health-yoshi] Webhook send failed: ${err.message}`);
     return false;
   }
 }

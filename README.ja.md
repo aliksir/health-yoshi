@@ -71,6 +71,9 @@ npm link
 | `services[].timeout` | number | はい | -- | タイムアウト（ミリ秒） |
 | `retryCount` | number | いいえ | `2` | 失敗時のリトライ回数 |
 | `retryDelayMs` | number | いいえ | `1000` | リトライ間隔（ミリ秒） |
+| `notifyOnNetworkOutage` | boolean | いいえ | `false` | 全サービスダウン時も通知する |
+| `consecutiveOutageThreshold` | number | いいえ | `3` | 連続N回全滅で通知（`notifyOnNetworkOutage` が false 時） |
+| `webhookUrl` | string | いいえ | `null` | 汎用 Webhook URL（POST JSON） |
 | `telegram.botToken` | string | はい | -- | Telegram Bot API トークン |
 | `telegram.chatId` | string | はい | -- | アラート送信先の Telegram チャット ID |
 

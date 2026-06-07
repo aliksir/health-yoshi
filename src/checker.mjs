@@ -99,7 +99,16 @@ export function parseConfig(raw) {
   const chatId = process.env.HEALTH_YOSHI_CHAT_ID
     || resolveSecretRef(raw.telegram.chatId);
 
-  return { services, retryCount, retryDelayMs, telegram: { botToken, chatId } };
+  const notifyOnNetworkOutage = raw.notifyOnNetworkOutage === true;
+  const consecutiveOutageThreshold = typeof raw.consecutiveOutageThreshold === 'number'
+    ? raw.consecutiveOutageThreshold : 3;
+  const webhookUrl = raw.webhookUrl || null;
+
+  return {
+    services, retryCount, retryDelayMs,
+    telegram: { botToken, chatId },
+    notifyOnNetworkOutage, consecutiveOutageThreshold, webhookUrl,
+  };
 }
 
 /**

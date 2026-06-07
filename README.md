@@ -71,6 +71,9 @@ Create or edit `config.json` in the project root:
 | `services[].timeout` | number | yes | -- | Timeout in milliseconds |
 | `retryCount` | number | no | `2` | Number of retries on failure |
 | `retryDelayMs` | number | no | `1000` | Delay between retries (ms) |
+| `notifyOnNetworkOutage` | boolean | no | `false` | Send notification even when all services are down |
+| `consecutiveOutageThreshold` | number | no | `3` | Notify after N consecutive all-service-down events (when `notifyOnNetworkOutage` is false) |
+| `webhookUrl` | string | no | `null` | Generic webhook URL for notifications (POST JSON) |
 | `telegram.botToken` | string | yes | -- | Telegram Bot API token |
 | `telegram.chatId` | string | yes | -- | Telegram chat ID for alerts |
 

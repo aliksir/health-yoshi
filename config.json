@@ -28,6 +28,9 @@
   ],
   "retryCount": 2,
   "retryDelayMs": 1000,
+  "notifyOnNetworkOutage": false,
+  "consecutiveOutageThreshold": 3,
+  "webhookUrl": null,
   "telegram": {
     "botToken": "SECRET_REF:HEALTH_YOSHI_BOT_TOKEN",
     "chatId": "SECRET_REF:HEALTH_YOSHI_CHAT_ID"
