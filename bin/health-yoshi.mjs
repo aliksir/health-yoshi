@@ -8,7 +8,7 @@
  * Exit code is always 0 (designed for schtasks periodic execution).
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
@@ -31,9 +31,24 @@ function saveState(state) {
   writeFileSync(STATE_PATH, JSON.stringify(state), 'utf-8');
 }
 
+function writeStats(entry) {
+  try {
+    const dir = process.env.NEKO_HQ_STATS
+      ? dirname(process.env.NEKO_HQ_STATS)
+      : join(homedir(), '.neko-hq');
+    const file = process.env.NEKO_HQ_STATS || join(dir, 'stats.jsonl');
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    appendFileSync(file, JSON.stringify(entry) + '\n', 'utf8');
+  } catch (err) {
+    console.error(`[health-yoshi] stats write failed: ${err.message}`);
+  }
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function main() {
+  const startTime = Date.now();
+
   // Parse --config argument or use default
   const args = process.argv.slice(2);
   let configPath = resolve(__dirname, '..', 'config.json');
@@ -133,6 +148,23 @@ async function main() {
       latencyMs: r.latencyMs,
     })),
   };
+
+  // Write stats entry
+  writeStats({
+    schema_version: '1.1',
+    tool: 'health-yoshi',
+    command: 'check',
+    ts: new Date().toISOString(),
+    duration_ms: Date.now() - startTime,
+    exit_code: failed.length > 0 ? 1 : 0,
+    severity: failed.length > 0 ? 'warn' : 'info',
+    summary: {
+      total: results.length,
+      healthy: results.length - failed.length,
+      unhealthy: failed.length,
+      notified: notified ? 1 : 0,
+    },
+  });
 
   console.log(JSON.stringify(output, null, 2));
   process.exit(0);
