@@ -1,6 +1,6 @@
 {
   "name": "health-yoshi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Service health checker with Telegram notification (zero dependencies)",
   "type": "module",
   "bin": {
