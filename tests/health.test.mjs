@@ -12,6 +12,7 @@ import {
   resolveSecretRef,
   isNetworkOutage,
   formatFailureMessage,
+  normalizeCredential,
 } from '../src/checker.mjs';
 
 // --- parseConfig ---
@@ -255,5 +256,117 @@ describe('parseConfig with env var override', () => {
 
     assert.equal(cfg.telegram.botToken, null);
     assert.equal(cfg.telegram.chatId, null);
+  });
+});
+
+// --- normalizeCredential ---
+
+describe('normalizeCredential', () => {
+  it('trims leading and trailing whitespace from a string', () => {
+    assert.equal(normalizeCredential('  tok  '), 'tok');
+  });
+
+  it('trims CR from the end of a string', () => {
+    assert.equal(normalizeCredential('tok\r'), 'tok');
+  });
+
+  it('returns null when the string is whitespace only', () => {
+    assert.equal(normalizeCredential('   '), null);
+  });
+
+  it('returns null for null input', () => {
+    assert.equal(normalizeCredential(null), null);
+  });
+
+  it('returns null for undefined input', () => {
+    assert.equal(normalizeCredential(undefined), null);
+  });
+
+  it('returns null for numeric input', () => {
+    assert.equal(normalizeCredential(42), null);
+  });
+});
+
+// --- parseConfig trim normalization (A1-A8) ---
+
+describe('parseConfig trim normalization', () => {
+  const tokenKey = 'HEALTH_YOSHI_BOT_TOKEN';
+  const chatKey = 'HEALTH_YOSHI_CHAT_ID';
+  const secretKey = 'HEALTH_YOSHI_TEST_TRIM_SECRET';
+
+  const baseSvc = [{ name: 'x', url: 'http://x', timeout: 1000 }];
+
+  afterEach(() => {
+    delete process.env[tokenKey];
+    delete process.env[chatKey];
+    delete process.env[secretKey];
+  });
+
+  // A1: env token with trailing CR
+  it('A1: trims trailing CR from env botToken', () => {
+    process.env[tokenKey] = 'tok\r';
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: { botToken: 'fallback', chatId: 'cid' },
+    });
+    assert.equal(cfg.telegram.botToken, 'tok');
+  });
+
+  // A2: env token with surrounding whitespace
+  it('A2: trims surrounding whitespace from env botToken', () => {
+    process.env[tokenKey] = '  tok  ';
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: { botToken: 'fallback', chatId: 'cid' },
+    });
+    assert.equal(cfg.telegram.botToken, 'tok');
+  });
+
+  // A3: env token is whitespace only — becomes null (no config fallback)
+  it('A3: whitespace-only env botToken normalizes to null (no fallback to config)', () => {
+    process.env[tokenKey] = '   ';
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: { botToken: 'valid-config-token', chatId: 'cid' },
+    });
+    assert.equal(cfg.telegram.botToken, null);
+  });
+
+  // A4: config plain value with CR+LF
+  it('A4: trims CR+LF from config plain botToken value', () => {
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: { botToken: 'tok\r\n', chatId: 'cid' },
+    });
+    assert.equal(cfg.telegram.botToken, 'tok');
+  });
+
+  // A5: SECRET_REF resolved value with trailing CR
+  it('A5: trims trailing CR from SECRET_REF-resolved botToken', () => {
+    process.env[secretKey] = 'secret-tok\r';
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: { botToken: `SECRET_REF:${secretKey}`, chatId: 'cid' },
+    });
+    assert.equal(cfg.telegram.botToken, 'secret-tok');
+  });
+
+  // A6: chatId env with trailing CR
+  it('A6: trims trailing CR from env chatId', () => {
+    process.env[chatKey] = '12345\r';
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: { botToken: 'btok', chatId: 'fallback-cid' },
+    });
+    assert.equal(cfg.telegram.chatId, '12345');
+  });
+
+  // A8: env unset and config telegram is empty object — botToken is null
+  it('A8: botToken is null when env unset and config telegram has no botToken', () => {
+    const cfg = parseConfig({
+      services: baseSvc,
+      telegram: {},
+    });
+    assert.equal(cfg.telegram.botToken, null);
   });
 });

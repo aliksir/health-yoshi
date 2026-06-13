@@ -94,8 +94,34 @@ node bin/health-yoshi.mjs
 # Using a custom config file
 node bin/health-yoshi.mjs --config /path/to/my-config.json
 
+# Diagnose credentials without running service checks
+node bin/health-yoshi.mjs --check
+
 # If globally installed
 health-yoshi --config /path/to/my-config.json
+```
+
+### Credential diagnostics (`--check`)
+
+Reads the config (including `SECRET_REF` resolution) and prints a diagnostics summary for `botToken` and `chatId`, then exits with code 0. No service checks, notifications, or webhook calls are performed.
+
+Actual credential values are never shown — only the source type, character length, and a whitespace/CR warning if trimming was needed.
+
+```
+[health-yoshi] --check: credential diagnostics
+  (actual values are never shown)
+
+  botToken:
+    source  : env
+    length  : 42
+    trimmed : 0
+  
+  chatId:
+    source  : SECRET_REF (HEALTH_YOSHI_CHAT_ID)
+    length  : 10
+    trimmed : 1 WARNING: whitespace/CR detected
+
+  result: OK
 ```
 
 ### Output example
@@ -150,6 +176,7 @@ schtasks /create /tn "health-yoshi" /tr "node C:\path\to\health-yoshi\bin\health
 | Option | Description |
 |--------|-------------|
 | `--config <path>` | Path to config.json (default: `./config.json` in project root) |
+| `--check` | Diagnose credential resolution and exit 0. No service checks or notifications are run. |
 
 ## Testing
 

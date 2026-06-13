@@ -94,8 +94,34 @@ node bin/health-yoshi.mjs
 # カスタム設定ファイルを指定
 node bin/health-yoshi.mjs --config /path/to/my-config.json
 
+# サービスチェックを実行せずクレデンシャルを診断
+node bin/health-yoshi.mjs --check
+
 # グローバルインストール済みの場合
 health-yoshi --config /path/to/my-config.json
+```
+
+### クレデンシャル診断（`--check`）
+
+config の読込（`SECRET_REF` 解決含む）を行い、`botToken` と `chatId` の診断情報を表示して exit 0 で終了します。サービスチェック・通知・Webhook の実行は一切行いません。
+
+実際のクレデンシャル値は出力されません。表示されるのは解決元の種別・文字数・空白/CRの混入検出のみです。
+
+```
+[health-yoshi] --check: credential diagnostics
+  (actual values are never shown)
+
+  botToken:
+    source  : env
+    length  : 42
+    trimmed : 0
+
+  chatId:
+    source  : SECRET_REF (HEALTH_YOSHI_CHAT_ID)
+    length  : 10
+    trimmed : 1 WARNING: whitespace/CR detected
+
+  result: OK
 ```
 
 ### 出力例
@@ -150,6 +176,7 @@ schtasks /create /tn "health-yoshi" /tr "node C:\path\to\health-yoshi\bin\health
 | オプション | 説明 |
 |-----------|------|
 | `--config <path>` | config.json のパス（デフォルト: プロジェクトルートの `./config.json`） |
+| `--check` | クレデンシャル解決の診断のみ行い exit 0。サービスチェック・通知は実行されません。 |
 
 ## テスト
 

@@ -60,6 +60,17 @@ export async function checkService(url, timeout, retryCount, retryDelayMs) {
 }
 
 /**
+ * Normalize a credential value: trim whitespace, return null if non-string or empty after trim.
+ * @param {*} value - Raw credential value
+ * @returns {string|null}
+ */
+export function normalizeCredential(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
+}
+
+/**
  * Parse and validate config.
  * @param {object} raw - Raw config object from JSON
  * @returns {{ services: Array, retryCount: number, retryDelayMs: number, telegram: { botToken: string, chatId: string } }}
@@ -93,11 +104,14 @@ export function parseConfig(raw) {
     throw new Error('Config must have a "telegram" object');
   }
 
-  // Resolve telegram credentials: env vars override config values
-  const botToken = process.env.HEALTH_YOSHI_BOT_TOKEN
-    || resolveSecretRef(raw.telegram.botToken);
-  const chatId = process.env.HEALTH_YOSHI_CHAT_ID
-    || resolveSecretRef(raw.telegram.chatId);
+  // Resolve telegram credentials: env vars override config values.
+  // normalizeCredential trims whitespace/CR and converts empty strings to null.
+  const botToken = normalizeCredential(
+    process.env.HEALTH_YOSHI_BOT_TOKEN || resolveSecretRef(raw.telegram.botToken),
+  );
+  const chatId = normalizeCredential(
+    process.env.HEALTH_YOSHI_CHAT_ID || resolveSecretRef(raw.telegram.chatId),
+  );
 
   const notifyOnNetworkOutage = raw.notifyOnNetworkOutage === true;
   const consecutiveOutageThreshold = typeof raw.consecutiveOutageThreshold === 'number'

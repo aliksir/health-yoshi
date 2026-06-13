@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync } fr
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
-import { checkService, parseConfig, isNetworkOutage, formatFailureMessage } from '../src/checker.mjs';
+import { checkService, parseConfig, isNetworkOutage, formatFailureMessage, normalizeCredential, resolveSecretRef } from '../src/checker.mjs';
 import { sendTelegram, sendWebhook } from '../src/notifier.mjs';
 
 const STATE_DIR = join(homedir(), '.health-yoshi');
@@ -51,6 +51,7 @@ async function main() {
 
   // Parse --config argument or use default
   const args = process.argv.slice(2);
+  const checkMode = args.includes('--check');
   let configPath = resolve(__dirname, '..', 'config.json');
 
   const configIdx = args.indexOf('--config');
@@ -59,9 +60,10 @@ async function main() {
   }
 
   // Load config
+  let raw;
   let config;
   try {
-    const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
+    raw = JSON.parse(readFileSync(configPath, 'utf-8'));
     config = parseConfig(raw);
   } catch (err) {
     console.error(`[health-yoshi] Config error: ${err.message}`);
@@ -72,6 +74,61 @@ async function main() {
       results: [],
     };
     console.log(JSON.stringify(errorResult, null, 2));
+    process.exit(0);
+  }
+
+  // --check mode: show credential diagnostics only (no real values)
+  if (checkMode) {
+    const tgCfg = (raw && raw.telegram) ? raw.telegram : {};
+
+    function credentialDiag(label, envKey, configValue) {
+      const rawEnvValue = process.env[envKey];
+      const rawConfigValue = resolveSecretRef(configValue);
+
+      // Determine raw value and source before normalization
+      let rawValue;
+      let source;
+      if (rawEnvValue !== undefined && rawEnvValue !== null && rawEnvValue !== '') {
+        rawValue = rawEnvValue;
+        source = 'env';
+      } else if (typeof configValue === 'string' && configValue.startsWith('SECRET_REF:')) {
+        rawValue = rawConfigValue;
+        const refName = configValue.slice('SECRET_REF:'.length);
+        source = rawValue !== null ? `SECRET_REF (${refName})` : `SECRET_REF (${refName}) [unset]`;
+      } else if (typeof configValue === 'string' && configValue.length > 0) {
+        rawValue = rawConfigValue;
+        source = 'config';
+      } else {
+        rawValue = null;
+        source = 'unresolved';
+      }
+
+      const normalized = normalizeCredential(rawValue);
+      const rawLen = typeof rawValue === 'string' ? rawValue.length : 0;
+      const normLen = normalized !== null ? normalized.length : 0;
+      const trimmedDiff = rawLen - normLen;
+
+      const lengthStr = normalized !== null ? String(normLen) : '0 (unresolved)';
+      const trimmedStr = trimmedDiff > 0
+        ? `${trimmedDiff} WARNING: whitespace/CR detected`
+        : String(trimmedDiff);
+
+      console.log(`  ${label}:`);
+      console.log(`    source  : ${source}`);
+      console.log(`    length  : ${lengthStr}`);
+      console.log(`    trimmed : ${trimmedStr}`);
+    }
+
+    console.log('[health-yoshi] --check: credential diagnostics');
+    console.log('  (actual values are never shown)');
+    console.log('');
+    credentialDiag('botToken', 'HEALTH_YOSHI_BOT_TOKEN', tgCfg.botToken);
+    console.log('');
+    credentialDiag('chatId', 'HEALTH_YOSHI_CHAT_ID', tgCfg.chatId);
+    console.log('');
+
+    const bothResolved = config.telegram.botToken !== null && config.telegram.chatId !== null;
+    console.log(`  result: ${bothResolved ? 'OK' : 'NG'}`);
     process.exit(0);
   }
 
