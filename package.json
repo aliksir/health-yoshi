@@ -1,0 +1,17 @@
+{
+  "name": "health-yoshi",
+  "version": "0.3.0",
+  "description": "Service health checker with Telegram notification (zero dependencies)",
+  "type": "module",
+  "bin": {
+    "health-yoshi": "./bin/health-yoshi.mjs"
+  },
+  "scripts": {
+    "start": "node bin/health-yoshi.mjs",
+    "test": "node --test tests/health.test.mjs"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
